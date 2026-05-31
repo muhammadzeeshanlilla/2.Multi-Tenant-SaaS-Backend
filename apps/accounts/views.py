@@ -8,6 +8,9 @@ from rest_framework.decorators import action
 from apps.accounts.models import User
 from apps.accounts.permissions import IsAdmin
 
+from apps.audit.models import AuditLog
+from apps.audit.utils import create_audit_log
+
 from apps.accounts.serializers import (
     CompanyRegisterSerializer,
     LoginSerializer,
@@ -73,6 +76,14 @@ class LoginAPIView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
 
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.USER_LOGIN,
+                object_type="User",
+                object_id=user.id,
+                description=f"{user.username} logged in successfully.",
+            )
+            
             return Response(
                 {
                     "success": True,
@@ -154,6 +165,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             user = serializer.save()
+
+            create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.USER_CREATED,
+            object_type="User",
+            object_id=user.id,
+            description=f"User {user.username} was created by {request.user.username}.",
+            )
 
             return Response(
                 {

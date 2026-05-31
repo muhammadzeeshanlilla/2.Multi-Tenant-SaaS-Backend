@@ -12,6 +12,7 @@ urlpatterns = [
     path("api/users/", include("apps.accounts.user_urls")),
     path("api/projects/", include("apps.projects.urls")),
     path("api/tasks/", include("apps.tasks.urls")),
+    path("api/audit-logs/", include("apps.audit.urls")),
 
     # Swagger Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

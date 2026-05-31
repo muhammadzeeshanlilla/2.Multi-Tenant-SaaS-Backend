@@ -2,6 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.audit.utils import create_audit_log
+from apps.audit.models import AuditLog
 from apps.tasks.models import Task
 from apps.tasks.serializers import (
     TaskListSerializer,
@@ -162,6 +164,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         task.is_deleted = True
         task.save()
 
+        create_audit_log(
+        request=request,
+        action=AuditLog.ActionChoices.TASK_DELETED,
+        object_type="Task",
+        object_id=task.id,
+        description=f"Task '{task.title}' was deleted by {request.user.username}.",
+        )
+
         return Response(
             {
                 "success": True,
@@ -189,6 +199,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         task.is_deleted = False
         task.save()
+
+        create_audit_log(
+        request=request,
+        action=AuditLog.ActionChoices.TASK_RESTORED,
+        object_type="Task",
+        object_id=task.id,
+        description=f"Task '{task.title}' was restored by {request.user.username}.",
+        )
 
         return Response(
             {
@@ -219,6 +237,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             task.status = serializer.validated_data["status"]
             task.save()
+
+            create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.TASK_STATUS_CHANGED,
+            object_type="Task",
+            object_id=task.id,
+            description=f"Task '{task.title}' status changed to {task.status} by {request.user.username}.",
+   )
 
             return Response(
                 {

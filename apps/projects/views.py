@@ -2,6 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.audit.models import AuditLog
+from apps.audit.utils import create_audit_log
+
 from apps.projects.models import Project, ProjectMember
 from apps.projects.serializers import (
     ProjectListSerializer,
@@ -64,6 +67,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 created_by=request.user,
             )
 
+            create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.PROJECT_CREATED,
+            object_type="Project",
+            object_id=project.id,
+            description=f"Project '{project.name}' was created by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -101,6 +112,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             project = serializer.save()
 
+            create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.PROJECT_UPDATED,
+            object_type="Project",
+            object_id=project.id,
+            description=f"Project '{project.name}' was updated by {request.user.username}.",
+            )
+
+
             return Response(
                 {
                     "success": True,
@@ -126,6 +146,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             project = serializer.save()
 
+            create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.PROJECT_UPDATED,
+            object_type="Project",
+            object_id=project.id,
+            description=f"Project '{project.name}' was updated by {request.user.username}.",
+           )
             return Response(
                 {
                     "success": True,
