@@ -3,6 +3,9 @@ from rest_framework import serializers
 from apps.accounts.models import User
 from apps.companies.models import Company
 
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class CompanyRegisterSerializer(serializers.Serializer):
     company_name = serializers.CharField(max_length=255)
@@ -57,4 +60,69 @@ class CompanyRegisterSerializer(serializers.Serializer):
         return {
             "company": company,
             "admin_user": admin_user
+        }
+    
+# ------------------------------------------------------------------
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        try:
+            user = User.objects.get(email=email, is_deleted=False)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({
+                "email": "Invalid email or password."
+            })
+
+        user = authenticate(username=user.username, password=password)
+
+        if not user:
+            raise serializers.ValidationError({
+                "password": "Invalid email or password."
+            })
+
+        if not user.is_active:
+            raise serializers.ValidationError({
+                "account": "This account is inactive."
+            })
+
+        refresh = RefreshToken.for_user(user)
+
+        attrs["user"] = user
+        attrs["refresh"] = str(refresh)
+        attrs["access"] = str(refresh.access_token)
+
+        return attrs
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    company = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "role",
+            "company",
+            "is_active",
+            "created_at",
+        ]
+
+    def get_company(self, obj):
+        if not obj.company:
+            return None
+
+        return {
+            "id": obj.company.id,
+            "name": obj.company.name,
+            "slug": obj.company.slug,
+            "email": obj.company.email,
         }
