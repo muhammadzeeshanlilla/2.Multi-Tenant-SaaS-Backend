@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.audit.utils import create_audit_log
 from apps.audit.models import AuditLog
+from apps.audit.utils import create_audit_log
 from apps.tasks.models import Task
 from apps.tasks.serializers import (
     TaskListSerializer,
@@ -16,7 +16,13 @@ from apps.accounts.permissions import IsAdminOrManager
 
 class TaskViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
-        if self.action in ["create", "update", "partial_update", "destroy", "restore"]:
+        if self.action in [
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+            "restore",
+        ]:
             return [IsAdminOrManager()]
 
         return super().get_permissions()
@@ -66,6 +72,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             task = serializer.save()
 
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.TASK_CREATED,
+                object_type="Task",
+                object_id=task.id,
+                description=f"Task '{task.title}' was created by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -109,6 +123,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             task = serializer.save()
 
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.TASK_UPDATED,
+                object_type="Task",
+                object_id=task.id,
+                description=f"Task '{task.title}' was updated by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -140,6 +162,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             task = serializer.save()
 
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.TASK_UPDATED,
+                object_type="Task",
+                object_id=task.id,
+                description=f"Task '{task.title}' was updated by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -165,11 +195,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         task.save()
 
         create_audit_log(
-        request=request,
-        action=AuditLog.ActionChoices.TASK_DELETED,
-        object_type="Task",
-        object_id=task.id,
-        description=f"Task '{task.title}' was deleted by {request.user.username}.",
+            request=request,
+            action=AuditLog.ActionChoices.TASK_DELETED,
+            object_type="Task",
+            object_id=task.id,
+            description=f"Task '{task.title}' was deleted by {request.user.username}.",
         )
 
         return Response(
@@ -201,11 +231,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         task.save()
 
         create_audit_log(
-        request=request,
-        action=AuditLog.ActionChoices.TASK_RESTORED,
-        object_type="Task",
-        object_id=task.id,
-        description=f"Task '{task.title}' was restored by {request.user.username}.",
+            request=request,
+            action=AuditLog.ActionChoices.TASK_RESTORED,
+            object_type="Task",
+            object_id=task.id,
+            description=f"Task '{task.title}' was restored by {request.user.username}.",
         )
 
         return Response(
@@ -220,7 +250,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"], url_path="status")
     def status(self, request, pk=None):
         task = self.get_object()
-
         user = request.user
 
         if user.role == User.RoleChoices.EMPLOYEE and task.assigned_to != user:
@@ -239,12 +268,12 @@ class TaskViewSet(viewsets.ModelViewSet):
             task.save()
 
             create_audit_log(
-            request=request,
-            action=AuditLog.ActionChoices.TASK_STATUS_CHANGED,
-            object_type="Task",
-            object_id=task.id,
-            description=f"Task '{task.title}' status changed to {task.status} by {request.user.username}.",
-   )
+                request=request,
+                action=AuditLog.ActionChoices.TASK_STATUS_CHANGED,
+                object_type="Task",
+                object_id=task.id,
+                description=f"Task '{task.title}' status changed to {task.status} by {request.user.username}.",
+            )
 
             return Response(
                 {

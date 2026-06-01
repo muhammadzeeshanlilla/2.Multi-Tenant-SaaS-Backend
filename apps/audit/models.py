@@ -21,6 +21,12 @@ class AuditLog(models.Model):
         TASK_RESTORED = "TASK_RESTORED", "Task Restored"
         TASK_STATUS_CHANGED = "TASK_STATUS_CHANGED", "Task Status Changed"
 
+        USER_UPDATED = "USER_UPDATED", "User Updated"
+        USER_DELETED = "USER_DELETED", "User Deleted"
+        USER_RESTORED = "USER_RESTORED", "User Restored"
+
+        PROJECT_USERS_ASSIGNED = "PROJECT_USERS_ASSIGNED", "Project Users Assigned"
+
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,

@@ -1,16 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
-from rest_framework import viewsets
 from rest_framework.decorators import action
+
 from apps.accounts.models import User
 from apps.accounts.permissions import IsAdmin
-
-from apps.audit.models import AuditLog
-from apps.audit.utils import create_audit_log
-
 from apps.accounts.serializers import (
     CompanyRegisterSerializer,
     LoginSerializer,
@@ -20,9 +15,11 @@ from apps.accounts.serializers import (
     UserUpdateSerializer,
 )
 
+from apps.audit.models import AuditLog
+from apps.audit.utils import create_audit_log
+
 
 class CompanyRegisterAPIView(APIView):
-
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -67,6 +64,7 @@ class CompanyRegisterAPIView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -83,7 +81,7 @@ class LoginAPIView(APIView):
                 object_id=user.id,
                 description=f"{user.username} logged in successfully.",
             )
-            
+
             return Response(
                 {
                     "success": True,
@@ -122,9 +120,9 @@ class MeAPIView(APIView):
                 "data": serializer.data,
             },
             status=status.HTTP_200_OK,
-        )   
-    
-# ---------------------
+        )
+
+
 class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
 
@@ -160,18 +158,18 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
             data=request.data,
-            context={"request": request}
+            context={"request": request},
         )
 
         if serializer.is_valid():
             user = serializer.save()
 
             create_audit_log(
-            request=request,
-            action=AuditLog.ActionChoices.USER_CREATED,
-            object_type="User",
-            object_id=user.id,
-            description=f"User {user.username} was created by {request.user.username}.",
+                request=request,
+                action=AuditLog.ActionChoices.USER_CREATED,
+                object_type="User",
+                object_id=user.id,
+                description=f"User {user.username} was created by {request.user.username}.",
             )
 
             return Response(
@@ -226,6 +224,14 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             updated_user = serializer.save()
 
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.USER_UPDATED,
+                object_type="User",
+                object_id=updated_user.id,
+                description=f"User {updated_user.username} was updated by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -264,6 +270,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             updated_user = serializer.save()
+
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.USER_UPDATED,
+                object_type="User",
+                object_id=updated_user.id,
+                description=f"User {updated_user.username} was updated by {request.user.username}.",
+            )
 
             return Response(
                 {
@@ -308,6 +322,14 @@ class UserViewSet(viewsets.ModelViewSet):
         user.is_active = False
         user.save()
 
+        create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.USER_DELETED,
+            object_type="User",
+            object_id=user.id,
+            description=f"User {user.username} was deleted by {request.user.username}.",
+        )
+
         return Response(
             {
                 "success": True,
@@ -336,6 +358,14 @@ class UserViewSet(viewsets.ModelViewSet):
         user.is_deleted = False
         user.is_active = True
         user.save()
+
+        create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.USER_RESTORED,
+            object_type="User",
+            object_id=user.id,
+            description=f"User {user.username} was restored by {request.user.username}.",
+        )
 
         return Response(
             {

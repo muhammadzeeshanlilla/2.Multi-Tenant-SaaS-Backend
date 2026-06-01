@@ -17,7 +17,14 @@ from apps.accounts.models import User
 
 class ProjectViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
-        if self.action in ["create", "update", "partial_update", "destroy", "restore", "assign_users"]:
+        if self.action in [
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+            "restore",
+            "assign_users",
+        ]:
             return [IsAdminOrManager()]
 
         return super().get_permissions()
@@ -68,11 +75,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
 
             create_audit_log(
-            request=request,
-            action=AuditLog.ActionChoices.PROJECT_CREATED,
-            object_type="Project",
-            object_id=project.id,
-            description=f"Project '{project.name}' was created by {request.user.username}.",
+                request=request,
+                action=AuditLog.ActionChoices.PROJECT_CREATED,
+                object_type="Project",
+                object_id=project.id,
+                description=f"Project '{project.name}' was created by {request.user.username}.",
             )
 
             return Response(
@@ -113,13 +120,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project = serializer.save()
 
             create_audit_log(
-            request=request,
-            action=AuditLog.ActionChoices.PROJECT_UPDATED,
-            object_type="Project",
-            object_id=project.id,
-            description=f"Project '{project.name}' was updated by {request.user.username}.",
+                request=request,
+                action=AuditLog.ActionChoices.PROJECT_UPDATED,
+                object_type="Project",
+                object_id=project.id,
+                description=f"Project '{project.name}' was updated by {request.user.username}.",
             )
-
 
             return Response(
                 {
@@ -147,12 +153,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project = serializer.save()
 
             create_audit_log(
-            request=request,
-            action=AuditLog.ActionChoices.PROJECT_UPDATED,
-            object_type="Project",
-            object_id=project.id,
-            description=f"Project '{project.name}' was updated by {request.user.username}.",
-           )
+                request=request,
+                action=AuditLog.ActionChoices.PROJECT_UPDATED,
+                object_type="Project",
+                object_id=project.id,
+                description=f"Project '{project.name}' was updated by {request.user.username}.",
+            )
+
             return Response(
                 {
                     "success": True,
@@ -176,6 +183,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         project.is_deleted = True
         project.save()
+
+        create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.PROJECT_DELETED,
+            object_type="Project",
+            object_id=project.id,
+            description=f"Project '{project.name}' was deleted by {request.user.username}.",
+        )
 
         return Response(
             {
@@ -204,6 +219,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         project.is_deleted = False
         project.save()
+
+        create_audit_log(
+            request=request,
+            action=AuditLog.ActionChoices.PROJECT_RESTORED,
+            object_type="Project",
+            object_id=project.id,
+            description=f"Project '{project.name}' was restored by {request.user.username}.",
+        )
 
         return Response(
             {
@@ -241,6 +264,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     project=project,
                     user=user,
                 )
+
+            create_audit_log(
+                request=request,
+                action=AuditLog.ActionChoices.PROJECT_USERS_ASSIGNED,
+                object_type="Project",
+                object_id=project.id,
+                description=f"Users were assigned to project '{project.name}' by {request.user.username}.",
+            )
 
             return Response(
                 {
