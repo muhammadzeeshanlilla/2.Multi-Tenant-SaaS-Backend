@@ -142,11 +142,15 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.AnonRateThrottle",
+        "apps.common.throttling.LoginRateThrottle",
+        "apps.common.throttling.CompanyRegisterRateThrottle",
     ],
 
     "DEFAULT_THROTTLE_RATES": {
         "user": "1000/day",
         "anon": "100/day",
+        "login": "5/minute",
+        "company_register": "3/hour",
     },
 }
 
