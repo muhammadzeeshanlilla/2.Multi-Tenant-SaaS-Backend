@@ -12,6 +12,7 @@ from apps.tasks.serializers import (
 )
 from apps.accounts.models import User
 from apps.accounts.permissions import IsAdminOrManager
+from apps.common.tasks import send_task_assignment_email
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -80,6 +81,16 @@ class TaskViewSet(viewsets.ModelViewSet):
                 description=f"Task '{task.title}' was created by {request.user.username}.",
             )
 
+            if task.assigned_to and task.assigned_to.email:
+                send_task_assignment_email.delay(
+                    user_email=task.assigned_to.email,
+                    username=task.assigned_to.username,
+                    task_title=task.title,
+                    project_name=task.project.name,
+                    assigned_by=request.user.username,
+                    assigned_by_role=request.user.role,
+                )
+
             return Response(
                 {
                     "success": True,
@@ -112,6 +123,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         task = self.get_object()
+        old_assigned_user = task.assigned_to
 
         serializer = self.get_serializer(
             task,
@@ -122,6 +134,20 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             task = serializer.save()
+
+            if (
+                task.assigned_to
+                and task.assigned_to != old_assigned_user
+                and task.assigned_to.email
+            ):
+                send_task_assignment_email.delay(
+                    user_email=task.assigned_to.email,
+                    username=task.assigned_to.username,
+                    task_title=task.title,
+                    project_name=task.project.name,
+                    assigned_by=request.user.username,
+                    assigned_by_role=request.user.role,
+                )
 
             create_audit_log(
                 request=request,
@@ -151,6 +177,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         task = self.get_object()
+        old_assigned_user = task.assigned_to
 
         serializer = self.get_serializer(
             task,
@@ -161,6 +188,20 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             task = serializer.save()
+
+            if (
+                task.assigned_to
+                and task.assigned_to != old_assigned_user
+                and task.assigned_to.email
+            ):
+                send_task_assignment_email.delay(
+                    user_email=task.assigned_to.email,
+                    username=task.assigned_to.username,
+                    task_title=task.title,
+                    project_name=task.project.name,
+                    assigned_by=request.user.username,
+                    assigned_by_role=request.user.role,
+                )
 
             create_audit_log(
                 request=request,

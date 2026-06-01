@@ -14,6 +14,8 @@ from apps.projects.serializers import (
 from apps.accounts.permissions import IsAdminOrManager
 from apps.accounts.models import User
 
+from apps.common.tasks import send_project_assignment_email
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
@@ -260,9 +262,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             for user in users:
                 ProjectMember.objects.create(
-                    company=request.user.company,
-                    project=project,
-                    user=user,
+                   company=request.user.company,
+                   project=project,
+                   user=user,
+                )
+
+                if user.email:
+                    send_project_assignment_email.delay(
+                      user_email=user.email,
+                      username=user.username,
+                      project_name=project.name,
+                      assigned_by=request.user.username,
+                      assigned_by_role=request.user.role,
                 )
 
             create_audit_log(
