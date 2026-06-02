@@ -1,0 +1,120 @@
+1. Redis
+What is Redis?
+
+Redis is a message broker that temporarily stores jobs.
+
+Why did we use Redis?
+
+In our project, when an Admin or Manager assigns a task, we want to send an email notification.
+
+Without Redis:
+
+Admin assigns task
+↓
+Django waits for email sending
+↓
+Response becomes slow
+
+With Redis:
+
+Admin assigns task
+↓
+Job is sent to Redis
+↓
+Django immediately returns response
+Competition Answer
+
+Redis is used as a message broker between Django and Celery. It temporarily stores background jobs such as email notifications, allowing the API to respond quickly without waiting for the email to be sent.
+
+2. Celery
+What is Celery?
+
+Celery is a background task processor.
+
+Why did we use Celery?
+
+When Redis stores a job:
+
+Send Email
+
+Celery picks that job and executes it.
+
+Example:
+
+Admin assigns Employee to Project
+↓
+Redis stores email job
+↓
+Celery picks job
+↓
+Email is sent
+Competition Answer
+
+Celery is used for background processing. In our project, it handles email notifications asynchronously. This improves performance because users do not need to wait for emails to be sent before receiving an API response.
+
+3. Swagger
+What is Swagger?
+
+Swagger is an API documentation tool.
+
+Why did we use Swagger?
+
+Our project has many APIs:
+
+Company Registration
+Login
+Create User
+Create Project
+Assign User
+Create Task
+Audit Logs
+
+Instead of remembering all URLs and request bodies, Swagger automatically documents them.
+
+Example:
+
+/api/docs/
+
+shows:
+
+API URL
+Request Body
+Response
+Authentication
+Testing Interface
+Competition Answer
+
+Swagger is used for API documentation and testing. It automatically generates a user-friendly interface where developers can view, understand, and test all APIs without manually reading the code.
+
+Simple Interview Answer
+
+If someone asks:
+
+Why Redis?
+
+Redis stores background jobs temporarily and acts as a bridge between Django and Celery.
+
+Why Celery?
+
+Celery executes background tasks such as email notifications without slowing down the main application.
+
+Why Swagger?
+
+Swagger automatically documents all APIs and makes testing and integration easier for developers.
+
+One-Line Summary for Presentation
+Redis  → Stores background jobs
+Celery → Executes background jobs
+Swagger → Documents and tests APIs
+
+And in your project:
+
+Admin assigns task
+↓
+Django saves task
+↓
+Redis stores email job
+↓
+Celery sends email
+↓
+Swagger documents the API
