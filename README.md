@@ -1,7 +1,7 @@
 # TenantFlow
 
 TenantFlow is a multi-tenant SaaS application with a Django REST Framework API and a Next.js frontend. Company data is isolated at the backend, with Admin, Manager, and Employee permissions reflected in the user interface.
-![DevOps Automation Engine](./img.png)
+![TenantFlow](./img.png)
 ## Local startup order
 
 1. Start PostgreSQL and create the database and user documented in [`backend/README.md`](backend/README.md).
